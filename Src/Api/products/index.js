@@ -26,11 +26,14 @@ res.status(201).send({newProd:req.body})
 ProductsRouter.get("/",async(req,res,next)=>{
  
     try{
+
         const products= await getProducts()
         if(req.query && req.query.category){
             const filteredProducts=products.filter(p=>p.category===req.query.category)
+       
             res.send(filteredProducts)
         }else{
+           
         res.send(products)
         }
     }catch(err){

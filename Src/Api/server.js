@@ -9,24 +9,26 @@ import ProductFileRouter from "./ProductFile/index.js";
 import createHttpError from "http-errors";
 
 const server=Express()
-const port=process.env.PORT || 3003
+const port=process.env.PORT 
 server.use(Express.json())
 server.use(Express.static(PublicFolderPath))
 
-const whiteList=[process.env.FE]
+const whiteList=[process.env.FE_DEV_URL, process.env.FE_PROD_URL]
+
+const corsOpt={
+    origin: (currentOrigin, corsNext) => {
+      if (!currentOrigin || whiteList.indexOf(currentOrigin) !== -1) {
+       
+        corsNext(null, true)
+      } else {
+   
+        corsNext(createHttpError(400, `Origin ${currentOrigin} is not in the whitelist!`))
+      }
+    },
+  }
 
 server.use(
-    cors({
-      origin: (currentOrigin, corsNext) => {
-        if (!currentOrigin || whiteList.indexOf(currentOrigin) !== -1) {
-         
-          corsNext(null, true)
-        } else {
-     
-          corsNext(createHttpError(400, `Origin ${currentOrigin} is not in the whitelist!`))
-        }
-      },
-    })
+    cors(corsOpt)
   )
 
 server.use("/products",ProductsRouter)
