@@ -1,24 +1,22 @@
 import  Express  from "express";
 import uniqId from "uniqid"
-import { getProducts, getReviews, SaveProductPicture, writeProduct, writeReview } from "../lib/fs-tools.js";
+import { getProducts, writeProduct } from "../lib/fs-tools.js";
 import createHttpError from "http-errors"
 import { checkProductSchema, triggerBadRequest } from "../validation/proudctValidation.js";
-import { checkReviewSchema } from "../validation/reviewValidation.js";
-import multer from "multer"
-import { extname } from "path";
+import { saveNewProduct } from "../lib/db-tools.js";
+
 
 const ProductsRouter=Express.Router()
+
+
+
 
 ProductsRouter.post("/",checkProductSchema,triggerBadRequest,async(req,res,next)=>{
    
    try{
-    const products= await getProducts()
-    const newProduct={...req.body,_id:uniqId(),createdAt:new Date(),updatedAt:new Date(),imageUrl:""}
-    if(newProduct){
-        products.push(newProduct)
-        await writeProduct(products)
-        res.status(201).send({_id:newProduct._id})
-    }
+await saveNewProduct(req.body)
+
+res.status(201).send({newProd:req.body})
 }catch(err){
     next(err)
    }

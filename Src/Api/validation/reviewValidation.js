@@ -11,8 +11,9 @@ const ReviewSchema={
     rate:{
         in:["body"],
         
-        isNumeric:
+        isInt:
             {
+                options:{min:1,max:5},
             errorMessage:"Rate is a mandatory field and needs to be a number from 0-5"
         }
       

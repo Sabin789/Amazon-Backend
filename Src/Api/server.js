@@ -6,12 +6,28 @@ import cors from 'cors';
 import { badRequestHandler, genericErrorHandler, notFoundHandler } from "./errorHandlers.js";
 import ReviewsRouter from "./reviews/index.js";
 import ProductFileRouter from "./ProductFile/index.js";
+import createHttpError from "http-errors";
 
 const server=Express()
-const port=3001
+const port=process.env.PORT
 server.use(Express.json())
 server.use(Express.static(PublicFolderPath))
-server.use(cors())
+
+const whiteList=[process.env.FE]
+
+server.use(
+    cors({
+      origin: (currentOrigin, corsNext) => {
+        if (!currentOrigin || whiteList.indexOf(currentOrigin) !== -1) {
+         
+          corsNext(null, true)
+        } else {
+     
+          corsNext(createHttpError(400, `Origin ${currentOrigin} is not in the whitelist!`))
+        }
+      },
+    })
+  )
 
 server.use("/products",ProductsRouter)
 server.use("/products",ReviewsRouter)
@@ -24,6 +40,6 @@ server.use(genericErrorHandler)
 
 
 server.listen(port,()=>{
-    console.table(listEndpoints(server))
-    console.log(`Server is lidtening on port ${port}`)
+    // console.table(listEndpoints(server))
+    console.log(`Server is listening on port ${port}`)
 })

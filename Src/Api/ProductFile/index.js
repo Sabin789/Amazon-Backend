@@ -4,11 +4,25 @@ import { extname } from "path";
 import createHttpError from "http-errors"
 import { getProducts, SaveProductPicture, writeProduct} from "../lib/fs-tools.js";
 import { fileURLToPath } from "url";
-
+import { v2 as cloudinary } from "cloudinary"
+import { CloudinaryStorage } from "multer-storage-cloudinary"
 
 const ProductFileRouter=Express.Router()
 
-ProductFileRouter.post("/:productId/upload", multer().single("imageUrl"),async(req,res,next)=>{
+
+
+const cloudinaryUploader = multer({
+    storage: new CloudinaryStorage({
+      cloudinary, // cloudinary is going to search for smth in .env vars called process.env.CLOUDINARY_URL
+      params: {
+        folder: "fs0522/users",
+      },
+    }),
+  }).single("imageUrl")
+
+
+
+ProductFileRouter.post("/:productId/upload", cloudinaryUploader,async(req,res,next)=>{
     try{
       const products= await getProducts()
       const singleProduct= products.find(p=>p._id===req.params.productId)
