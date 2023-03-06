@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "ci": "^2.2.0",
     "cloudinary": "^1.35.0",
     "cors": "^2.8.5",
     "cra-template": "1.2.0",

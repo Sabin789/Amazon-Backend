@@ -9,7 +9,7 @@ import ProductFileRouter from "./ProductFile/index.js";
 import createHttpError from "http-errors";
 
 const server=Express()
-const port=process.env.PORT
+const port=process.env.PORT || 3001
 server.use(Express.json())
 server.use(Express.static(PublicFolderPath))
 
