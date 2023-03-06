@@ -24,7 +24,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon -r dotenv/config -e js ./src/Api/server.js",
-    "start": "node ./src/Api/server.js"
+    "start": "node ./Src/Api/server.js"
 
   },
   "keywords": [],
