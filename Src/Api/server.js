@@ -43,5 +43,6 @@ server.use(genericErrorHandler)
 
 server.listen(port,()=>{
     // console.table(listEndpoints(server))
+    console.log(process.env.FE_DEV_URL)
     console.log(`Server is listening on port ${port}`)
 })
