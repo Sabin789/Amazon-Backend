@@ -1,7 +1,7 @@
 import fs from "fs-extra"
 import { fileURLToPath } from "url"; 
 import { dirname,join } from "path";
-import { writeFile, writeFileSync } from "fs";
+import { createReadStream, writeFile, writeFileSync } from "fs";
 
 const {readJSON,writeJSON}=fs
 
@@ -16,3 +16,4 @@ export const writeProduct=arrayOfProducts=>writeJSON(productsToJson,arrayOfProdu
 export const getReviews=()=>readJSON(ReviewsToJson)
 export const writeReview=arrayOfReviews=>writeJSON(ReviewsToJson,arrayOfReviews)
 export const SaveProductPicture= (fileName,fileContentAsBuffer)=>writeFileSync(join(PublicFolderPath, fileName), fileContentAsBuffer)
+export const  getReadableStream=()=>createReadStream(productsToJson)

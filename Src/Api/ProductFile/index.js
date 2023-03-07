@@ -2,12 +2,14 @@ import Express from "express";
 import multer from "multer"
 import { extname } from "path";
 import createHttpError from "http-errors"
-import { getProducts, SaveProductPicture, writeProduct} from "../lib/fs-tools.js";
+import { getProducts, getReadableStream, SaveProductPicture, writeProduct} from "../lib/fs-tools.js";
 import { fileURLToPath } from "url";
 import { v2 as cloudinary } from "cloudinary"
 import { CloudinaryStorage } from "multer-storage-cloudinary"
 import { error } from "console";
-
+import { pipeline } from "stream";
+import {createGzip} from "zlib"
+import { getPDFReadableStream } from "../lib/pdf-tools.js";
 const ProductFileRouter=Express.Router()
 
 
@@ -49,6 +51,36 @@ ProductFileRouter.post("/:productId/upload", cloudinaryUploader,async(req,res,ne
      next(err)
     }
   })
+ProductFileRouter.get("/none/upload",(req,res,next)=>{
+    try{
+        res.setHeader("Content-Disposition","attachment; filename=products.json.gz")
+        const source=getReadableStream()
+        const destination=res
+        const transform=createGzip()
+        pipeline(source,transform,destination,err =>{
+            if(err){console.log(err)}else{
+                console.log("Compressed json")
+            }
+        })
+    }catch(err){
+        next(err)
+    }
+})
 
 
+ProductFileRouter.get("/none/pdf",(req,res,next)=>{
+    try{
+        res.setHeader("Content-Disposition","attachment; filename=products.pdf")
+        const source=getPDFReadableStream()
+        const destination=res
+   
+        pipeline(source,destination,err =>{
+            if(err){console.log(err)}else{
+                console.log("PDF")
+            }
+        })
+    }catch(err){
+        next(err)
+    }
+})
 export default ProductFileRouter

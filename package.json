@@ -17,6 +17,8 @@
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
     "nodemon": "^2.0.20",
+    "pdfmake": "^0.2.7",
+    "request": "^2.88.2",
     "save-dev": "^0.0.1-security",
     "uniqid": "^5.4.0"
   },
@@ -25,7 +27,6 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon -r dotenv/config -e js ./src/Api/server.js",
     "start": "node ./Src/Api/server.js"
-
   },
   "keywords": [],
   "author": "",
