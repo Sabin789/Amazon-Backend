@@ -4,15 +4,16 @@ import createHttpError from "http-errors"
 const ProudctSchema={
     category: {
         in: ["body"],
+        
         isString: {
           errorMessage: "Category is a mandatory field and needs to be a string!",
-        },
+        }
       },
   name:{
   in:["body"],
   isString: {
     errorMessage: "Name is a mandatory field and needs to be a string!",
-  },
+  }
 },
  description:{
     in:["body"],
@@ -23,6 +24,7 @@ const ProudctSchema={
  },
  brand:{
     in:["body"],
+    
     isString:{
         errorMessage: "Brand is a mandatory field and needs to be a string!",
 

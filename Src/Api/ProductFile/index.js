@@ -3,10 +3,10 @@ import multer from "multer"
 import { extname } from "path";
 import createHttpError from "http-errors"
 import { getProducts, getReadableStream, SaveProductPicture, writeProduct} from "../lib/fs-tools.js";
-import { fileURLToPath } from "url";
+
 import { v2 as cloudinary } from "cloudinary"
 import { CloudinaryStorage } from "multer-storage-cloudinary"
-import { error } from "console";
+
 import { pipeline } from "stream";
 import {createGzip} from "zlib"
 import { getPDFReadableStream } from "../lib/pdf-tools.js";
@@ -68,17 +68,21 @@ ProductFileRouter.get("/none/upload",(req,res,next)=>{
 })
 
 
-ProductFileRouter.get("/none/pdf",(req,res,next)=>{
+ProductFileRouter.get("/:productId/pdf",async (req,res,next)=>{
     try{
+      const products=await getProducts()
+      const singleProduct= products.find(p=>p._id===req.params.productId)
+      if(singleProduct){
         res.setHeader("Content-Disposition","attachment; filename=products.pdf")
-        const source=getPDFReadableStream()
+        const source=getPDFReadableStream(singleProduct)
         const destination=res
-   
+
         pipeline(source,destination,err =>{
             if(err){console.log(err)}else{
                 console.log("PDF")
             }
         })
+      }
     }catch(err){
         next(err)
     }

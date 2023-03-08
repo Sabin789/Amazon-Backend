@@ -2,7 +2,7 @@
 import PdfPrinter from "pdfmake"
 
 
-export const  getPDFReadableStream=()=>{
+export const  getPDFReadableStream=(product)=>{
     const fonts={
      Helvetica:{
         normal:"Helvetica",
@@ -16,9 +16,7 @@ export const  getPDFReadableStream=()=>{
 
     const dd = {
         content: [
-            'First paragraph',
-            'Another paragraph, this time a little bit longer to make sure, this line will be divided into at least two lines',
-            "Second"
+            product.name,product.category
         ],
         defaultStyle:{
             font:"Helvetica"
