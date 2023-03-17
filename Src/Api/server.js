@@ -7,9 +7,17 @@ import { badRequestHandler, genericErrorHandler, notFoundHandler } from "./error
 import ReviewsRouter from "./reviews/index.js";
 import ProductFileRouter from "./ProductFile/index.js";
 import createHttpError from "http-errors";
+import swaggerUi from "swagger-ui-express"
+import yaml from "yamljs";
+import { dirname,join } from "path";
+import mongoose from "mongoose";
+
+// const yamlFile=yaml.load(join(process.cwd(), "./src/docs/apiDocs.yml"))
+
+
 
 const server=Express()
-const port=process.env.PORT 
+const port=process.env.PORT  
 server.use(Express.json())
 server.use(Express.static(PublicFolderPath))
 
@@ -34,12 +42,17 @@ server.use(
 server.use("/products",ProductsRouter)
 server.use("/products",ReviewsRouter)
 server.use("/products",ProductFileRouter)
+// server.use("docs", swaggerUi.serve,swaggerUi.setup(yamlFile))
 
 
 server.use(badRequestHandler)
 server.use(notFoundHandler)
 server.use(genericErrorHandler)
 
+mongoose.connect(process.env.MONGO_URL)
+mongoose.connection.on("connected",()=>{
+    console.log("succesfully connected to mongo")
+})
 
 server.listen(port,()=>{
     // console.table(listEndpoints(server))

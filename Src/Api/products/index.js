@@ -4,19 +4,21 @@ import { getProducts, writeProduct } from "../lib/fs-tools.js";
 import createHttpError from "http-errors"
 import { checkProductSchema, triggerBadRequest } from "../validation/proudctValidation.js";
 import { saveNewProduct } from "../lib/db-tools.js";
-
+import productSchema from "../validation/productModel.js"
+import q2m from "query-to-mongo"
 
 const ProductsRouter=Express.Router()
 
 
 
 
-ProductsRouter.post("/",checkProductSchema,triggerBadRequest,async(req,res,next)=>{
+ProductsRouter.post("/",async(req,res,next)=>{
    
    try{
-await saveNewProduct(req.body)
+   const newProduct=new productSchema(req.body)
 
-res.status(201).send({newProd:req.body})
+   const {_id}=await newProduct.save()
+   res.status(201).send({_id:_id})
 }catch(err){
     next(err)
    }
@@ -24,17 +26,26 @@ res.status(201).send({newProd:req.body})
 
 
 ProductsRouter.get("/",async(req,res,next)=>{
- 
-    try{
+    const whiteList=[process.env.BE_DEV_URL, process.env.BE_PROD_URL]
 
-        const products= await getProducts()
-        if(req.query && req.query.category){
-            const filteredProducts=products.filter(p=>p.category===req.query.category)
-       
-            res.send(filteredProducts)
-        }else{
-           
-        res.send(products)
+    try{
+        const url = process.env.BE_PROD_URL
+        const mongoQuery = q2m(req.query)
+        if(whiteList.includes(url)){
+            const allProducts = await productSchema.find(mongoQuery.criteria, mongoQuery.options.fields)
+            .limit(mongoQuery.options.limit)
+            .skip(mongoQuery.options.skip)
+            .sort(mongoQuery.options.sort)
+            const total = await productSchema.countDocuments(mongoQuery.criteria)
+
+            res.send({
+                links: mongoQuery.links(url, total),
+                total,
+                numberOfPages: Math.ceil(total / mongoQuery.options.limit),
+                allProducts,
+              })
+// const products= await productSchema.find()
+// res.send(products)
         }
     }catch(err){
         next(err)
@@ -45,12 +56,11 @@ ProductsRouter.get("/",async(req,res,next)=>{
 ProductsRouter.get("/:productId",async(req,res,next)=>{
   
     try{
-        const products= await getProducts()
-        const singleProduct= products.find(p=>p._id===req.params.productId)
-        if(singleProduct){
-        res.send(singleProduct)
+        const product=await productSchema.findById(req.params.productId)
+        if(product){
+     res.send(product)
         }else{
-            res.send((createHttpError(404, `Product with id ${req.params.productId} not found!`))) 
+         res.send((createHttpError(404, `Product with id ${req.params.productId} not found!`))) 
         }
     }catch(err){
         res.send(next(err))
@@ -61,14 +71,17 @@ ProductsRouter.get("/:productId",async(req,res,next)=>{
 ProductsRouter.put("/:productId",async(req,res,next)=>{
    
     try{
-        const products= await getProducts()
-        const index=products.findIndex(p=>p._id===req.params.productId)
-        const currentProduct=products[index]
-        const updated={...currentProduct,...req.body,updatedAt:new Date()}
-        products[index]=updated
-        await writeProduct(products)
-        res.send(updated)
-     
+        let updated =await productSchema.findByIdAndUpdate(
+            req.params.productId,
+            req.body,
+            {new:true,runValidators:true}
+        )
+        if(updated){
+            res.send(updated)
+        }else{
+            next(createHttpError(404, `Product with id ${req.params.productId} not found!`))
+        
+        }
     }catch(err){
         next(err)
     }
@@ -78,10 +91,12 @@ ProductsRouter.put("/:productId",async(req,res,next)=>{
 ProductsRouter.delete("/:productId",async(req,res,next)=>{
    
     try{
-        const products= await getProducts()
-        const remaining=products.filter(p=>p._id!==req.params.productId)
-        await writeProduct(remaining)
-        res.status(204).send()
+        const deleted= await productSchema.findByIdAndDelete(req.params.productId)
+        if(deleted){
+         res.status(204).send()
+        }else{
+     
+        }
 
     }catch(err){  
           next(err)

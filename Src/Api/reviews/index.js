@@ -4,16 +4,22 @@ import { checkReviewSchema } from "../validation/reviewValidation.js";
 import { getProducts, getReviews, writeReview } from "../lib/fs-tools.js";
 import createHttpError from "http-errors"
 import {  triggerBadRequest } from "../validation/proudctValidation.js";
+import productSchema from "../validation/productModel.js"
 const ReviewsRouter=Express.Router()
 
 ReviewsRouter.post("/:productId/reviews",checkReviewSchema,triggerBadRequest,async(req,res,next)=>{
     try{
-        const reviews=await getReviews()
-        const newReview={...req.body,productId:req.params.productId,_id:uniqId(),createdAt:new Date(),updatedAt:new Date()}
+
+        const newReview={...req.body,createdAt:new Date(),updatedAt:new Date()}
         if(newReview){
-         reviews.push(newReview)
-         await writeReview(reviews)
-         res.status(201).send({_id:newReview._id})
+         const updatedProduct=await productSchema.findByIdAndUpdate(
+            req.params.productId,
+            {$push:{reviews:newReview}},
+            {new:true,runValidators:true}
+         )
+         if(updatedProduct){
+            res.send(updatedProduct)
+         }
         }
     }catch(err){
         next(err)
@@ -22,12 +28,16 @@ ReviewsRouter.post("/:productId/reviews",checkReviewSchema,triggerBadRequest,asy
 
 ReviewsRouter.get("/:productId/reviews",async(req,res,next)=>{
     try{
-        const products=await getProducts()
-        const reviews=await getReviews()
-        const singleProduct= products.find(p=>p._id===req.params.productId)
-      const reviewsById=reviews.filter(r=>r.productId===singleProduct._id)
-       
-        res.send(reviewsById)
+   
+        const product=await productSchema.findById(req.params.productId)
+        if(product){
+        const reviews=product.reviews
+        res.send(reviews)
+        }else{
+            next(createHttpError(404, `Product with id ${req.body.productId} not found!`))
+
+        }
+      
     }catch(err){
         next(err)
     }
@@ -35,17 +45,19 @@ ReviewsRouter.get("/:productId/reviews",async(req,res,next)=>{
 
 ReviewsRouter.get("/:productId/reviews/:reviewId",async(req,res,next)=>{
     try{
-        const products=await getProducts()
-        const reviews=await getReviews()
         
-        const singleProduct= products.find(p=>p._id===req.params.productId)
-        const reviewsById=reviews.filter(r=>r.productId===singleProduct._id)
-        const sinlgeReview=reviewsById.find(r=>r._id===req.params.reviewId)
-
-        if(sinlgeReview){
-        res.send(sinlgeReview)
+        const product=await productSchema.findById(req.params.productId)
+        if(product){
+        const review=product.reviews.find((r => r._id.toString() === req.params.reviewId))
+        if(review){
+            res.send(review)
         }else{
-            res.send((createHttpError(404, `Review with id ${req.params.productId} not found!`))) 
+            next(createHttpError(404, `Review with id ${req.body.reviewId} not found!`))
+
+        }
+        }else{
+            next(createHttpError(404, `Product with id ${req.body.productId} not found!`))
+
         }
     }catch(err){
         next(err)
@@ -55,18 +67,22 @@ ReviewsRouter.get("/:productId/reviews/:reviewId",async(req,res,next)=>{
 
 ReviewsRouter.put("/:productId/reviews/:reviewId",async(req,res,next)=>{
     try{
-        const reviews=await getReviews()
-
-        // const sinlgeReview=reviews.find(r=>r._id===req.params.reviewId)
-        const products=await getProducts()
-        const index=reviews.findIndex(i=>i._id===req.params.reviewId)
-        const singleProduct= products.find(p=>p._id===req.params.productId)
-        const reviewsById=reviews.filter(r=>r.productId===singleProduct._id)
-        const currentReview=reviewsById[index]
-        const updated={...currentReview,...req.body,updatedAt:new Date()}
-        reviewsById[index]=updated
-        await writeReview(reviewsById)
-        res.send(updated)
+        const product=await productSchema.findById(req.params.productId)
+        if(product){
+      
+            let index= product.reviews.findIndex(comment => comment._id.toString() === req.params.reviewId)
+         
+            if(index!==-1){
+                product.reviews[index]={...product.reviews[index],_id: req.params.reviewId,...req.body}
+                await product.save()
+                res.send(product)
+            }else{
+              next(createHttpError(404, `Comment with id ${req.body.reviewId} not found!`))
+            }
+        }else{
+            next(createHttpError(404, `product with id ${req.body.productId} not found!`))
+    
+        }
 
 
     }catch(err){
@@ -77,15 +93,16 @@ ReviewsRouter.put("/:productId/reviews/:reviewId",async(req,res,next)=>{
 
 ReviewsRouter.delete("/:productId/reviews/:reviewId",async(req,res,next)=>{
     try{
-        const products=await getProducts()
-        const reviews=await getReviews()
-        const singleProduct= products.find(p=>p._id===req.params.productId)
-        const reviewsById=reviews.filter(r=>r.productId===singleProduct._id)
-        const remaining=reviewsById.filter(r=>r._id!==req.params.reviewId)
-        if(remaining){
-        await writeReview(remaining)
-        res.status(204).send()
-        }
+        const updatedProduct = await productSchema.findByIdAndUpdate(
+            req.params.productId, // WHO
+            { $pull: { reviews: { _id: req.params.reviewId } } }, // HOW
+            { new: true, runValidators: true } // OPTIONS
+          )
+          if (updatedProduct) {
+            res.send(updatedProduct)
+          } else {
+            next(createHttpError(404, `Product with id ${req.params.productId} not found!`))
+          }
     }catch(err){
         next(err)
     }
